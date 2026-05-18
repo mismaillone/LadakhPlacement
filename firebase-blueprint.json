@@ -1,0 +1,68 @@
+{
+  "entities": {
+    "Job": {
+      "title": "Job Advertisement",
+      "description": "A job posting with all details.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "responsibilities": { "type": "array", "items": { "type": "string" } },
+        "qualifications": { "type": "array", "items": { "type": "string" } },
+        "location": { "type": "string" },
+        "experience": { "type": "string" },
+        "jobType": { "type": "string" },
+        "salary": { "type": "string" },
+        "benefits": { "type": "array", "items": { "type": "string" } },
+        "deadline": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "active": { "type": "boolean" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["title", "description", "createdAt", "active"]
+    },
+    "Application": {
+      "title": "Job Application",
+      "description": "An application submitted by a candidate.",
+      "type": "object",
+      "properties": {
+        "jobId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "portfolio": { "type": "string" },
+        "linkedin": { "type": "string" },
+        "coverLetter": { "type": "string" },
+        "resumeUrl": { "type": "string" },
+        "resumeName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "shortlisted", "rejected"] },
+        "appliedAt": { "type": "number" }
+      },
+      "required": ["jobId", "fullName", "email", "phone", "resumeUrl", "status", "appliedAt"]
+    },
+    "Admin": {
+      "title": "Admin Role",
+      "description": "Marker doc for admins.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "jobs": {
+      "schema": "Job",
+      "description": "All job postings."
+    },
+    "applications": {
+      "schema": "Application",
+      "description": "All submitted applications."
+    },
+    "admins": {
+      "schema": "Admin",
+      "description": "Authorized admin users."
+    }
+  }
+}

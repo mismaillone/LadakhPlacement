@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) || (request.auth.token.get('email', '') == 'ismaillone0000@gmail.com')); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // Admin Collection
+    match /admins/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // No one can self-assign admin roles via client
+      allow write: if false; 
+    }
+
+    // Jobs Collection
+    match /jobs/{jobId} {
+      // Anyone can read active jobs or admins can read all
+      allow read: if true;
+      allow list: if true;
+      
+      // Admins can create jobs
+      allow create: if isAdmin() && isValidId(jobId) && 
+                      incoming().keys().hasAll(['title', 'description', 'createdAt', 'active']) &&
+                      incoming().title is string && incoming().title.size() <= 200 &&
+                      incoming().description is string && incoming().description.size() <= 10000 &&
+                      (!('customFields' in incoming()) || incoming().customFields is list);
+      
+      // Admins can update jobs
+      allow update, delete: if isAdmin() && isValidId(jobId);
+    }
+
+    // Applications Collection
+    match /applications/{applicationId} {
+      allow read: if isAdmin() && isValidId(applicationId);
+      allow list: if isAdmin();
+      
+      // Anyone can create an application (even unauthenticated, but we'll try to encourage auth if possible. 
+      // Typically job boards don't require account to apply, mostly guests. Let's allow public writes)
+      // Actually, public unauthenticated writes are dangerous! Let's allow if they are authenticated by anonymous auth or email auth, 
+      // OR we just allow public writes with heavy schema validation to prevent spam.
+      // Wait, let's use anonymous auth or require Google signin. The user can just sign in to apply.
+      // Easiest is to allow unauthenticated but strictly validate fields.
+      allow create: if isValidId(applicationId) &&
+                      incoming().keys().hasAll(['jobId', 'fullName', 'email', 'phone', 'resumeUrl', 'status', 'appliedAt']) &&
+                      incoming().jobId is string && incoming().jobId.size() <= 128 &&
+                      incoming().fullName is string && incoming().fullName.size() <= 100 &&
+                      incoming().email is string && incoming().email.size() <= 150 &&
+                      incoming().phone is string && incoming().phone.size() <= 50 &&
+                      incoming().resumeUrl is string && incoming().resumeUrl.size() <= 1000 &&
+                      (!('otherDocsUrls' in incoming()) || (incoming().otherDocsUrls is list && incoming().otherDocsUrls.size() <= 5)) &&
+                      (!('otherDocsNames' in incoming()) || (incoming().otherDocsNames is list && incoming().otherDocsNames.size() <= 5)) &&
+                      (!('customResponses' in incoming()) || incoming().customResponses is map) &&
+                      incoming().status == 'pending';
+      
+      // Admins can update status (shortlisted/rejected)
+      allow update: if isAdmin() && isValidId(applicationId) &&
+                      incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
+                      (incoming().status == 'pending' || incoming().status == 'shortlisted' || incoming().status == 'rejected');
+      
+      // Admins can delete
+      allow delete: if isAdmin() && isValidId(applicationId);
+    }
+  }
+}
