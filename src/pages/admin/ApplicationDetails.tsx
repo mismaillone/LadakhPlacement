@@ -114,13 +114,13 @@ export default function ApplicationDetails() {
           </div>
 
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Cover Letter</h2>
-            {appData.coverLetter ? (
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">Custom Section</h2>
+            {appData.customSection ? (
               <div className="text-sm text-slate-600 whitespace-pre-wrap font-serif leading-relaxed">
-                {appData.coverLetter}
+                {appData.customSection}
               </div>
             ) : (
-              <p className="text-sm text-slate-400 italic">No cover letter provided.</p>
+              <p className="text-sm text-slate-400 italic">No custom section provided.</p>
             )}
           </div>
 
@@ -177,18 +177,6 @@ export default function ApplicationDetails() {
                   </div>
                 </a>
               ))}
-              {appData.portfolio && (
-                <a href={appData.portfolio.startsWith('http') ? appData.portfolio : `https://${appData.portfolio}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
-                  <span className="text-sm font-medium text-slate-700">Portfolio</span>
-                  <ExternalLink className="h-4 w-4 text-slate-400" />
-                </a>
-              )}
-              {appData.linkedin && (
-                <a href={appData.linkedin.startsWith('http') ? appData.linkedin : `https://${appData.linkedin}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-slate-300 transition-colors">
-                  <span className="text-sm font-medium text-slate-700">LinkedIn</span>
-                  <ExternalLink className="h-4 w-4 text-slate-400" />
-                </a>
-              )} 
             </div>
           </div>
 

@@ -11,7 +11,7 @@ export default function PublicLayout() {
             <span className="text-xl font-extrabold tracking-tight hidden sm:inline-block bg-gradient-to-r from-blue-700 to-blue-500 bg-clip-text text-transparent">Ladakh Placement</span>
           </Link>
           <nav className="flex items-center gap-6 text-sm font-medium">
-            <Link to="/" className="text-gray-600 hover:text-blue-600 transition-colors">Jobs</Link>
+            <Link to="/" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-gray-600 hover:text-blue-600 transition-colors">Jobs</Link>
             <Link to="/admin" className="text-gray-600 hover:text-blue-600 transition-colors">Admin Login</Link>
           </nav>
         </div>

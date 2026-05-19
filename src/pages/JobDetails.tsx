@@ -18,7 +18,7 @@ export default function JobDetails() {
 
   const [formData, setFormData] = useState({
     fullName: '', email: '', phone: '', address: '', 
-    portfolio: '', linkedin: '', coverLetter: ''
+    customSection: ''
   });
   const [customResponses, setCustomResponses] = useState<Record<string, any>>({});
   const [resumeFile, setResumeFile] = useState<File | null>(null);
@@ -102,17 +102,24 @@ export default function JobDetails() {
       let resumeUrl = 'https://example.com/resume.pdf';
       const finalCustomResponses = { ...customResponses };
       try {
+        const uploadWithTimeout = (promise: Promise<any>, timeoutMs: number = 3000) => {
+          return Promise.race([
+            promise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Firebase Storage timeout')), timeoutMs))
+          ]);
+        };
+
         const fileRef = ref(storage, `resumes/${jobId}/${Date.now()}_${resumeFile.name}`);
-        await uploadBytes(fileRef, resumeFile);
-        resumeUrl = await getDownloadURL(fileRef);
+        await uploadWithTimeout(uploadBytes(fileRef, resumeFile));
+        resumeUrl = await uploadWithTimeout(getDownloadURL(fileRef));
         
         // Upload any custom field files
         for (const field of job.customFields || []) {
           if (field.type === 'file' && customResponses[field.id] instanceof File) {
             const fileObj = customResponses[field.id] as File;
             const customFileRef = ref(storage, `customDocs/${jobId}/${field.id}_${Date.now()}_${fileObj.name}`);
-            await uploadBytes(customFileRef, fileObj);
-            const customFileUrl = await getDownloadURL(customFileRef);
+            await uploadWithTimeout(uploadBytes(customFileRef, fileObj));
+            const customFileUrl = await uploadWithTimeout(getDownloadURL(customFileRef));
             finalCustomResponses[field.id] = { url: customFileUrl, name: fileObj.name };
           }
         }
@@ -287,19 +294,11 @@ export default function JobDetails() {
                         <label className="block text-sm font-medium text-slate-700 mb-2">Location / Address</label>
                       <input type="text" className="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 py-3 px-4 border" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Portfolio URL (Optional)</label>
-                      <input type="url" className="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 py-3 px-4 border" value={formData.portfolio} onChange={e => setFormData({...formData, portfolio: e.target.value})} placeholder="https://" />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">LinkedIn Profile (Optional)</label>
-                      <input type="url" className="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 py-3 px-4 border" value={formData.linkedin} onChange={e => setFormData({...formData, linkedin: e.target.value})} placeholder="https://" />
-                    </div>
                   </div>
 
                   <div>
-                     <label className="block text-sm font-medium text-slate-700 mb-2">Cover Letter *</label>
-                    <textarea required rows={6} className="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 py-3 px-4 border" value={formData.coverLetter} onChange={e => setFormData({...formData, coverLetter: e.target.value})} placeholder="Tell us why you are a great fit for this role..." />
+                     <label className="block text-sm font-medium text-slate-700 mb-2">Custom Section *</label>
+                    <textarea required rows={6} className="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 py-3 px-4 border" value={formData.customSection} onChange={e => setFormData({...formData, customSection: e.target.value})} placeholder="Provide your Cover Letter, Portfolio Link, or LinkedIn Profile here..." />
                   </div>
 
                   {job.customFields && job.customFields.length > 0 && (
@@ -351,7 +350,7 @@ export default function JobDetails() {
                               required={field.required}
                               value={customResponses[field.id] || []}
                               onChange={(e) => {
-                                const values = Array.from(e.target.selectedOptions, option => option.value);
+                                const values = Array.from(e.target.selectedOptions, (option: any) => option.value);
                                 setCustomResponses({...customResponses, [field.id]: values});
                               }}
                               className="w-full rounded-xl border-slate-200 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 py-3 px-4 border bg-white min-h-[100px]"
